@@ -21,3 +21,11 @@ test("protected command without key shows onboarding guidance", () => {
   assert.match(result.stderr, /chartai connect --target cli/);
 });
 
+test("get-chart without key shows onboarding guidance", () => {
+  const result = spawnSync("node", ["bin/chartai.mjs", "get-chart", "ctx_123"], {
+    encoding: "utf8",
+    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Chartai agent key is required/);
+});

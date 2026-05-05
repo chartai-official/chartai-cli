@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import { writeFile } from "node:fs/promises";
+
 const DEFAULT_API_BASE = "https://api.test.chartai.live";
 const DEFAULT_WEB_BASE = "https://test.chartai.live";
 const DEFAULT_MCP_URL = "https://mcp-staging.chartai.live/mcp";
@@ -165,6 +167,36 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
   }
 }
 
+async function downloadChart(opts, contextRef) {
+  const key = agentKey(opts, true);
+  const contextId = contextRef.startsWith("ctx_") ? contextRef : `ctx_${contextRef}`;
+  const path = `/api/v1/contexts/${contextId}/chart`;
+  const url = `${apiBase(opts)}${path}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${key}`,
+      accept: "image/*,application/json"
+    }
+  });
+  if (!response.ok) {
+    let detail = "";
+    try {
+      detail = JSON.stringify(await response.json());
+    } catch {
+      detail = await response.text();
+    }
+    throw new Error(`HTTP ${response.status}: ${detail.slice(0, 300)}`);
+  }
+  if (!opts.output) {
+    process.stdout.write(`${url}\n`);
+    return;
+  }
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  await writeFile(opts.output, bytes);
+  process.stdout.write(`${opts.output}\n`);
+}
+
 function parseJsonObject(text, fallback = {}) {
   if (!text) return fallback;
   const value = JSON.parse(text);
@@ -225,7 +257,10 @@ async function run(parsed) {
   else if (["records", "search-records", "search_records"].includes(command)) data = await get("/api/v1/records", { from: opts.from, to: opts.to, pattern: opts.pattern, status: opts.status || "all", limit: opts.limit || 20, cursor: opts.cursor });
   else if (["record", "get-record", "get_record"].includes(command)) data = await get(`/api/v1/records/${positionals[0]}`);
   else if (["get-context", "get_context"].includes(command)) data = await get(`/api/v1/contexts/${positionals[0]}`);
-  else if (["get-chart", "get_chart", "chart"].includes(command)) data = await get(`/api/v1/contexts/${positionals[0].startsWith("ctx_") ? positionals[0] : `ctx_${positionals[0]}`}/chart`);
+  else if (["get-chart", "get_chart", "chart"].includes(command)) {
+    await downloadChart(opts, positionals[0]);
+    return;
+  }
   else if (["check-context-condition", "check_context_condition"].includes(command)) data = await requestJson(opts, "POST", `/api/v1/contexts/${positionals[0]}/conditions`, { auth: true, body: { condition_id: opts.conditionId, parameters: parseJsonObject(opts.parameters) } });
   else if (["get-timezone", "get_timezone"].includes(command)) data = await get("/api/v1/timezone");
   else if (["set-timezone", "set_timezone"].includes(command)) data = await requestJson(opts, "PUT", "/api/v1/timezone", { auth: true, body: { timezone: positionals[0] } });
@@ -248,4 +283,3 @@ run(parseArgv(process.argv.slice(2))).catch((error) => {
   process.stderr.write(`chartai: ${error.message}\n`);
   process.exit(1);
 });
-
