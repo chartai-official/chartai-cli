@@ -1,0 +1,22 @@
+{
+  "name": "@chartai/cli",
+  "version": "0.1.0-beta.1",
+  "description": "Chartai agent CLI for Chart Context research",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "chartai": "bin/chartai.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}
+
