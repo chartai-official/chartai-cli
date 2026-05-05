@@ -31,12 +31,17 @@ Never paste the raw key into an agent response.
 chartai get-capabilities
 chartai search-symbols --query BTC --asset crypto
 chartai scan --symbol BINANCE:BTCUSDT --timeframe 1h
-chartai get-context ctx_12345
+chartai inspect-chart-context ctx_12345 --output chart.png
 chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
 chartai check-context-condition ctx_12345 --condition-id price_volume_state
 chartai get-usage
 chartai mcp-config
 ```
+
+`inspect-chart-context` is the default judgment path after `scan`: it saves the
+native Core chart when `--output` is provided, then returns structured Chart
+Context JSON for verification. `get-chart` remains available for compatibility
+and explicit raw chart downloads.
 
 ## Supported Commands
 
@@ -46,6 +51,7 @@ chartai mcp-config
 - `search-symbols`, `search_symbols`, `list-symbols`, `list_symbols`
 - `resolve-symbol`, `resolve_symbol`
 - `scan`, `scan-contexts`, `scan_contexts`
+- `inspect-chart-context`, `inspect_chart_context`
 - `get-context`, `get_context`
 - `get-chart`, `get_chart`, `chart`
 - `record`, `get-record`, `get_record`
@@ -59,4 +65,3 @@ chartai mcp-config
 - `mcp-config`
 
 Chartai returns chart facts and Chart Context. It does not execute trades.
-

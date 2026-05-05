@@ -34,7 +34,7 @@ Usage:
   chartai get-capabilities
   chartai search-symbols --query BTC --asset crypto
   chartai scan --symbol BINANCE:BTCUSDT --timeframe 1h
-  chartai get-context ctx_12345
+  chartai inspect-chart-context ctx_12345 --output chart.png
   chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
   chartai get-usage
   chartai mcp-config
@@ -44,6 +44,7 @@ Global options:
   --api-base <url>      Default: ${DEFAULT_API_BASE}
   --web-base <url>      Default: ${DEFAULT_WEB_BASE}
   --mcp-url <url>       Default: ${DEFAULT_MCP_URL}
+  --output <path>       Save native chart PNG for get-chart or inspect-chart-context.
   --help, -h
 
 Agent key:
@@ -135,6 +136,10 @@ function appendParams(path, params = {}) {
   return `${url.pathname}${url.search}`;
 }
 
+function contextId(contextRef) {
+  return contextRef.startsWith("ctx_") ? contextRef : `ctx_${contextRef}`;
+}
+
 async function requestJson(opts, method, path, { params, body, auth = true } = {}) {
   const key = agentKey(opts, auth);
   const controller = new AbortController();
@@ -167,10 +172,9 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
   }
 }
 
-async function downloadChart(opts, contextRef) {
+async function downloadChartFile(opts, contextRef, outputPath) {
   const key = agentKey(opts, true);
-  const contextId = contextRef.startsWith("ctx_") ? contextRef : `ctx_${contextRef}`;
-  const path = `/api/v1/contexts/${contextId}/chart`;
+  const path = `/api/v1/contexts/${contextId(contextRef)}/chart`;
   const url = `${apiBase(opts)}${path}`;
   const response = await fetch(url, {
     method: "GET",
@@ -188,13 +192,15 @@ async function downloadChart(opts, contextRef) {
     }
     throw new Error(`HTTP ${response.status}: ${detail.slice(0, 300)}`);
   }
-  if (!opts.output) {
-    process.stdout.write(`${url}\n`);
-    return;
-  }
+  if (!outputPath) return { url };
   const bytes = new Uint8Array(await response.arrayBuffer());
-  await writeFile(opts.output, bytes);
-  process.stdout.write(`${opts.output}\n`);
+  await writeFile(outputPath, bytes);
+  return { path: outputPath };
+}
+
+async function downloadChart(opts, contextRef) {
+  const result = await downloadChartFile(opts, contextRef, opts.output);
+  process.stdout.write(`${result.path || result.url}\n`);
 }
 
 function parseJsonObject(text, fallback = {}) {
@@ -257,6 +263,19 @@ async function run(parsed) {
   else if (["records", "search-records", "search_records"].includes(command)) data = await get("/api/v1/records", { from: opts.from, to: opts.to, pattern: opts.pattern, status: opts.status || "all", limit: opts.limit || 20, cursor: opts.cursor });
   else if (["record", "get-record", "get_record"].includes(command)) data = await get(`/api/v1/records/${positionals[0]}`);
   else if (["get-context", "get_context"].includes(command)) data = await get(`/api/v1/contexts/${positionals[0]}`);
+  else if (["inspect-chart-context", "inspect_chart_context"].includes(command)) {
+    const contextRef = positionals[0];
+    data = await get(`/api/v1/contexts/${contextId(contextRef)}/inspect`);
+    const chart = data.chart && typeof data.chart === "object" ? data.chart : {};
+    const endpoint = chart.endpoint || chart.chart_endpoint || `/api/v1/contexts/${contextId(contextRef)}/chart`;
+    chart.chart_endpoint = endpoint;
+    chart.full_native_chart_url = `${apiBase(opts)}${endpoint}`;
+    if (opts.output) {
+      const saved = await downloadChartFile(opts, contextRef, opts.output);
+      chart.path = saved.path;
+    }
+    data.chart = chart;
+  }
   else if (["get-chart", "get_chart", "chart"].includes(command)) {
     await downloadChart(opts, positionals[0]);
     return;
