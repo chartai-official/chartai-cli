@@ -117,7 +117,7 @@ function agentKey(opts, requiredFor) {
   const key = (opts.apiKey || process.env.CHARTAI_AGENT_KEY || process.env.CHARTAI_API_KEY || "").trim();
   if (!key && requiredFor) {
     throw new Error(
-      "Chartai agent key is required. Run `chartai connect --target cli`, create an agent key, then set CHARTAI_AGENT_KEY."
+      "Chartai agent key is required. Run `chartai connect --target cli` to open the web key flow, then set CHARTAI_AGENT_KEY."
     );
   }
   return key;
@@ -233,9 +233,11 @@ async function run(parsed) {
       connect_url: url.toString(),
       target,
       env: "CHARTAI_AGENT_KEY",
+      flow: "manual_web_agent_key",
       next: [
         "Open connect_url in a browser.",
-        "Create an agent key.",
+        "Register or log in, verify email, and pay or renew in Chartai Web if needed.",
+        "Create or copy an Agent Key in Chartai Web.",
         "Export CHARTAI_AGENT_KEY locally before protected commands."
       ]
     });
@@ -256,7 +258,8 @@ async function run(parsed) {
   }
 
   const auth = !PUBLIC_COMMANDS.has(command);
-  const get = (path, params, forcePublic = false) => requestJson(opts, "GET", path, { params, auth: forcePublic ? false : auth });
+  const publicDiscoveryAuth = Boolean(agentKey(opts, false));
+  const get = (path, params, publicDiscovery = false) => requestJson(opts, "GET", path, { params, auth: publicDiscovery ? publicDiscoveryAuth : auth });
   let data;
 
   if (["get-status", "get_status", "status"].includes(command)) data = await get("/api/v1/status", undefined, true);
