@@ -35,6 +35,8 @@ Usage:
   chartai search-symbols --query BTC --asset crypto
   chartai scan --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
+  chartai get-context-manifest ctx_12345
+  chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
   chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
   chartai get-usage
   chartai mcp-config
@@ -44,7 +46,7 @@ Global options:
   --api-base <url>      Default: ${DEFAULT_API_BASE}
   --web-base <url>      Default: ${DEFAULT_WEB_BASE}
   --mcp-url <url>       Default: ${DEFAULT_MCP_URL}
-  --output <path>       Save native chart PNG for get-chart or inspect-chart-context.
+  --output <path>       Save raw chart for get-chart or VC inspection chart for inspect-chart-context.
   --help, -h
 
 Agent key:
@@ -86,6 +88,8 @@ function parseArgv(argv) {
     else if (item === "--output") opts.output = readValue(item);
     else if (item === "--condition-id") opts.conditionId = readValue(item);
     else if (item === "--parameters") opts.parameters = readValue(item);
+    else if (item === "--method") opts.method = readValue(item);
+    else if (item === "--observations") opts.observations = readValue(item);
     else if (item === "--name") opts.name = readValue(item);
     else if (item === "--inline-key") opts.inlineKey = true;
     else if (item === "--unread-only") opts.unreadOnly = true;
@@ -172,9 +176,9 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
   }
 }
 
-async function downloadChartFile(opts, contextRef, outputPath) {
+async function downloadChartFile(opts, contextRef, outputPath, chartPath) {
   const key = agentKey(opts, true);
-  const path = `/api/v1/contexts/${contextId(contextRef)}/chart`;
+  const path = chartPath || `/api/v1/contexts/${contextId(contextRef)}/chart`;
   const url = `${apiBase(opts)}${path}`;
   const response = await fetch(url, {
     method: "GET",
@@ -268,13 +272,30 @@ async function run(parsed) {
     data = await get(`/api/v1/contexts/${contextId(contextRef)}/inspect`);
     const chart = data.chart && typeof data.chart === "object" ? data.chart : {};
     const endpoint = chart.endpoint || chart.chart_endpoint || `/api/v1/contexts/${contextId(contextRef)}/chart`;
+    const inspectionEndpoint = chart.inspection_endpoint || `/api/v1/contexts/${contextId(contextRef)}/inspect/chart`;
     chart.chart_endpoint = endpoint;
+    chart.inspection_endpoint = inspectionEndpoint;
     chart.full_native_chart_url = `${apiBase(opts)}${endpoint}`;
+    chart.full_inspection_chart_url = `${apiBase(opts)}${inspectionEndpoint}`;
     if (opts.output) {
-      const saved = await downloadChartFile(opts, contextRef, opts.output);
+      const saved = await downloadChartFile(opts, contextRef, opts.output, inspectionEndpoint);
       chart.path = saved.path;
     }
     data.chart = chart;
+  }
+  else if (["get-context-manifest", "get_context_manifest"].includes(command)) data = await get(`/api/v1/contexts/${contextId(positionals[0])}/manifest`);
+  else if (["confirm-chart-visual-inspection", "confirm_chart_visual_inspection"].includes(command)) {
+    if (!positionals[0] || !positionals[1]) {
+      throw new Error("confirm-chart-visual-inspection requires context_id and observed visual code.");
+    }
+    data = await requestJson(opts, "POST", `/api/v1/contexts/${contextId(positionals[0])}/visual-confirmation`, {
+      auth: true,
+      body: {
+        observed_visual_code: positionals[1],
+        method: opts.method || "cli_file",
+        observations: opts.observations || ""
+      }
+    });
   }
   else if (["get-chart", "get_chart", "chart"].includes(command)) {
     await downloadChart(opts, positionals[0]);
