@@ -9,17 +9,16 @@ This beta package defaults to Chartai staging:
 - Web/key page: `https://test.chartai.live/app/keys`
 - MCP: `https://mcp-staging.chartai.live/mcp`
 
-Production endpoints will be enabled only after Chartai production launch is
-approved. Public docs and the three GitHub distribution repos are updated
-together when endpoints or runtime contract wording changes.
+Use the endpoints shown here for the beta runtime. Production URLs will be
+published in Chartai docs when launch opens.
 
 Use **subscription** only for Chartai billing plans and renewals. Durable agent
 workflows are **watchlists**, **monitors**, and **feed**.
 
-Agent reference contract: `scan-contexts` discovers current Chart Context;
-`context_id` is the decision evidence ID returned by Chartai and must be treated
-as opaque; `get-record` and `search-records` use `detection_id` for historical
-lifecycle records.
+Agent flow: use `scan-contexts` to find current Chart Context, then use
+`inspect-chart-context` before making a judgment. Keep the returned `context_id`
+as the decision evidence ID. Use `get-record` and `search-records` with
+`detection_id` only when you need historical lifecycle records.
 
 ## Install From GitHub
 
@@ -52,8 +51,8 @@ chartai get-usage
 chartai mcp-config
 ```
 
-`inspect-chart-context` is the default judgment path after `scan-contexts`: it saves the
-1920x1080 inspection chart with a visible VC code when `--output` is provided,
+`inspect-chart-context` is the default judgment path after `scan-contexts`. It
+saves the 1920x1080 inspection chart with a visible VC code when `--output` is provided,
 then returns structured Chart Context JSON for verification. If the agent can
 actually see the chart, read the VC code and call
 `confirm-chart-visual-inspection`. If the runtime cannot see images, report
