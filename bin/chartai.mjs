@@ -33,7 +33,7 @@ Usage:
   chartai connect --target cli|mcp|skill
   chartai get-capabilities
   chartai search-symbols --query BTC --asset crypto
-  chartai scan --symbol BINANCE:BTCUSDT --timeframe 1h
+  chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
   chartai get-context-manifest ctx_12345
   chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
@@ -51,6 +51,8 @@ Global options:
 
 Agent key:
   export CHARTAI_AGENT_KEY="..."
+
+Use "subscription" only for Chartai billing plans and renewals. Durable agent workflows are watchlists, monitors, and feed.
 `;
 }
 

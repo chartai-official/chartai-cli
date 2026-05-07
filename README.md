@@ -9,6 +9,13 @@ This beta package defaults to Chartai staging:
 - Web/key page: `https://test.chartai.live/app/keys`
 - MCP: `https://mcp-staging.chartai.live/mcp`
 
+Production endpoints will be enabled only after Chartai production launch is
+approved. Public docs and the three GitHub distribution repos are updated
+together when endpoints or runtime contract wording changes.
+
+Use **subscription** only for Chartai billing plans and renewals. Durable agent
+workflows are **watchlists**, **monitors**, and **feed**.
+
 ## Install From GitHub
 
 ```bash
@@ -30,7 +37,7 @@ Never paste the raw key into an agent response.
 ```bash
 chartai get-capabilities
 chartai search-symbols --query BTC --asset crypto
-chartai scan --symbol BINANCE:BTCUSDT --timeframe 1h
+chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
 chartai inspect-chart-context ctx_12345 --output chart.png
 chartai get-context-manifest ctx_12345
 chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
@@ -40,7 +47,7 @@ chartai get-usage
 chartai mcp-config
 ```
 
-`inspect-chart-context` is the default judgment path after `scan`: it saves the
+`inspect-chart-context` is the default judgment path after `scan-contexts`: it saves the
 1920x1080 inspection chart with a visible VC code when `--output` is provided,
 then returns structured Chart Context JSON for verification. If the agent can
 actually see the chart, read the VC code and call
@@ -70,5 +77,8 @@ remains available for compatibility and explicit raw chart downloads.
 - `list-feed`, `ack-feed`
 - `doctor`, `get-usage`, `get_usage`, `get-quota`, `get_quota`
 - `mcp-config`
+
+Compatibility aliases remain available for older agents, but new docs and
+examples use the standard action names.
 
 Chartai returns chart facts and Chart Context. It does not execute trades.

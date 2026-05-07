@@ -29,7 +29,7 @@ test("help prints Chartai CLI usage", () => {
   });
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Chartai CLI/);
-  assert.match(result.stdout, /scan --symbol/);
+  assert.match(result.stdout, /scan-contexts --symbol/);
   assert.match(result.stdout, /inspect-chart-context ctx_12345 --output chart\.png/);
   assert.match(result.stdout, /get-context-manifest ctx_12345/);
   assert.match(result.stdout, /confirm-chart-visual-inspection ctx_12345 ABCD/);
