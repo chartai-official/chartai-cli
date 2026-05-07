@@ -36,9 +36,9 @@ test("help prints Chartai CLI usage", () => {
 });
 
 test("protected command without key shows onboarding guidance", () => {
-  const result = spawnSync("node", ["bin/chartai.mjs", "scan", "--symbol", "BINANCE:BTCUSDT", "--timeframe", "1h"], {
+  const result = spawnSync("node", ["bin/chartai.mjs", "scan-contexts", "--symbol", "BINANCE:BTCUSDT", "--timeframe", "1h"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Chartai agent key is required/);
@@ -48,7 +48,7 @@ test("protected command without key shows onboarding guidance", () => {
 test("get-chart without key shows onboarding guidance", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "get-chart", "ctx_123"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Chartai agent key is required/);
@@ -57,26 +57,44 @@ test("get-chart without key shows onboarding guidance", () => {
 test("inspect-chart-context without key shows onboarding guidance", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "inspect-chart-context", "ctx_123"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Chartai agent key is required/);
   assert.match(result.stderr, /chartai connect --target cli/);
 });
 
-test("inspect_chart_context alias without key shows onboarding guidance", () => {
+test("old inspect_chart_context command is rejected", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "inspect_chart_context", "ctx_123"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Chartai agent key is required/);
+  assert.match(result.stderr, /Unknown command: inspect_chart_context/);
+});
+
+test("old scan command is rejected", () => {
+  const result = spawnSync("node", ["bin/chartai.mjs", "scan", "--symbol", "BINANCE:BTCUSDT", "--timeframe", "1h"], {
+    encoding: "utf8",
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unknown command: scan/);
+});
+
+test("old --api-key option is rejected", () => {
+  const result = spawnSync("node", ["bin/chartai.mjs", "--api-key", "cak_test", "get-status"], {
+    encoding: "utf8",
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unknown option: --api-key/);
 });
 
 test("get-context-manifest without key shows onboarding guidance", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "get-context-manifest", "ctx_123"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Chartai agent key is required/);
@@ -85,7 +103,7 @@ test("get-context-manifest without key shows onboarding guidance", () => {
 test("confirm-chart-visual-inspection without key shows onboarding guidance", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "confirm-chart-visual-inspection", "ctx_123", "ABCD"], {
     encoding: "utf8",
-    env: { ...process.env, CHARTAI_AGENT_KEY: "", CHARTAI_API_KEY: "" }
+    env: { ...process.env, CHARTAI_AGENT_KEY: "" }
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Chartai agent key is required/);

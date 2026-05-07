@@ -52,33 +52,30 @@ chartai mcp-config
 then returns structured Chart Context JSON for verification. If the agent can
 actually see the chart, read the VC code and call
 `confirm-chart-visual-inspection`. If the runtime cannot see images, report
-`visual_unverified` and continue with the structured context only. `get-chart`
-remains available for compatibility and explicit raw chart downloads.
+`visual_unverified` and continue with the structured context only. Use
+`get-chart` only for explicit raw chart downloads.
 
 ## Supported Commands
 
 - `connect`
-- `get-status`, `get_status`
-- `get-capabilities`, `get_capabilities`, `patterns`, `list-patterns`, `list_patterns`
-- `search-symbols`, `search_symbols`, `list-symbols`, `list_symbols`
-- `resolve-symbol`, `resolve_symbol`
-- `scan`, `scan-contexts`, `scan_contexts`
-- `inspect-chart-context`, `inspect_chart_context`
-- `get-context-manifest`, `get_context_manifest`
-- `confirm-chart-visual-inspection`, `confirm_chart_visual_inspection`
-- `get-context`, `get_context`
-- `get-chart`, `get_chart`, `chart`
-- `record`, `get-record`, `get_record`
-- `records`, `search-records`, `search_records`
-- `check-context-condition`, `check_context_condition`
+- `get-status`
+- `get-capabilities`
+- `search-symbols`
+- `resolve-symbol`
+- `scan-contexts`
+- `inspect-chart-context`
+- `get-context-manifest`
+- `confirm-chart-visual-inspection`
+- `get-context`
+- `get-chart`
+- `get-record`
+- `search-records`
+- `check-context-condition`
 - `get-timezone`, `set-timezone`
 - `create-watchlist`, `list-watchlist`, `remove-watchlist`
 - `create-monitor`, `list-monitors`, `pause-monitor`, `resume-monitor`, `delete-monitor`
 - `list-feed`, `ack-feed`
-- `doctor`, `get-usage`, `get_usage`, `get-quota`, `get_quota`
+- `get-usage`
 - `mcp-config`
-
-Compatibility aliases remain available for older agents, but new docs and
-examples use the standard action names.
 
 Chartai returns chart facts and Chart Context. It does not execute trades.

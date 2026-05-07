@@ -10,19 +10,9 @@ const DEFAULT_CONTEXT_LIMIT = 5;
 const PUBLIC_COMMANDS = new Set([
   "connect",
   "get-status",
-  "get_status",
-  "status",
   "get-capabilities",
-  "get_capabilities",
-  "patterns",
-  "list-patterns",
-  "list_patterns",
   "search-symbols",
-  "search_symbols",
-  "list-symbols",
-  "list_symbols",
   "resolve-symbol",
-  "resolve_symbol",
   "mcp-config"
 ]);
 
@@ -42,7 +32,7 @@ Usage:
   chartai mcp-config
 
 Global options:
-  --api-key <key>       Agent key. Prefer CHARTAI_AGENT_KEY.
+  --agent-key <key>     Agent key. Prefer CHARTAI_AGENT_KEY.
   --api-base <url>      Default: ${DEFAULT_API_BASE}
   --web-base <url>      Default: ${DEFAULT_WEB_BASE}
   --mcp-url <url>       Default: ${DEFAULT_MCP_URL}
@@ -69,7 +59,7 @@ function parseArgv(argv) {
       i += 1;
       return value;
     };
-    if (item === "--api-key") opts.apiKey = readValue(item);
+    if (item === "--agent-key") opts.agentKey = readValue(item);
     else if (item === "--api-base") opts.apiBase = readValue(item);
     else if (item === "--web-base") opts.webBase = readValue(item);
     else if (item === "--mcp-url") opts.mcpUrl = readValue(item);
@@ -116,7 +106,7 @@ function mcpUrl(opts) {
 }
 
 function agentKey(opts, requiredFor) {
-  const key = (opts.apiKey || process.env.CHARTAI_AGENT_KEY || process.env.CHARTAI_API_KEY || "").trim();
+  const key = (opts.agentKey || process.env.CHARTAI_AGENT_KEY || "").trim();
   if (!key && requiredFor) {
     throw new Error(
       "Chartai agent key is required. Run `chartai connect --target cli` to open the web key flow, then set CHARTAI_AGENT_KEY."
@@ -142,8 +132,12 @@ function appendParams(path, params = {}) {
   return `${url.pathname}${url.search}`;
 }
 
-function contextId(contextRef) {
-  return contextRef.startsWith("ctx_") ? contextRef : `ctx_${contextRef}`;
+function requireContextId(contextRef) {
+  const value = String(contextRef || "").trim();
+  if (!value.startsWith("ctx_")) {
+    throw new Error("context_id must use the Chart Context id form, e.g. ctx_123.");
+  }
+  return value;
 }
 
 async function requestJson(opts, method, path, { params, body, auth = true } = {}) {
@@ -180,7 +174,7 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
 
 async function downloadChartFile(opts, contextRef, outputPath, chartPath) {
   const key = agentKey(opts, true);
-  const path = chartPath || `/api/v1/contexts/${contextId(contextRef)}/chart`;
+  const path = chartPath || `/api/v1/contexts/${requireContextId(contextRef)}/chart`;
   const url = `${apiBase(opts)}${path}`;
   const response = await fetch(url, {
     method: "GET",
@@ -264,20 +258,20 @@ async function run(parsed) {
   const get = (path, params, publicDiscovery = false) => requestJson(opts, "GET", path, { params, auth: publicDiscovery ? publicDiscoveryAuth : auth });
   let data;
 
-  if (["get-status", "get_status", "status"].includes(command)) data = await get("/api/v1/status", undefined, true);
-  else if (["get-capabilities", "get_capabilities", "patterns", "list-patterns", "list_patterns"].includes(command)) data = await get("/api/v1/capabilities", undefined, true);
-  else if (["search-symbols", "search_symbols", "list-symbols", "list_symbols"].includes(command)) data = await get("/api/v1/symbols/search", { query: opts.query, asset: opts.asset, exchange: opts.exchange, limit: opts.limit || 50, cursor: opts.cursor }, true);
-  else if (["resolve-symbol", "resolve_symbol"].includes(command)) data = await get("/api/v1/symbols/resolve", { symbol: positionals[0] || opts.symbol }, true);
-  else if (["scan", "scan-contexts", "scan_contexts"].includes(command)) data = await get("/api/v1/contexts", { symbol: opts.symbol, timeframe: opts.timeframe, limit: opts.limit || DEFAULT_CONTEXT_LIMIT });
-  else if (["records", "search-records", "search_records"].includes(command)) data = await get("/api/v1/records", { from: opts.from, to: opts.to, pattern: opts.pattern, status: opts.status || "all", limit: opts.limit || 20, cursor: opts.cursor });
-  else if (["record", "get-record", "get_record"].includes(command)) data = await get(`/api/v1/records/${positionals[0]}`);
-  else if (["get-context", "get_context"].includes(command)) data = await get(`/api/v1/contexts/${positionals[0]}`);
-  else if (["inspect-chart-context", "inspect_chart_context"].includes(command)) {
-    const contextRef = positionals[0];
-    data = await get(`/api/v1/contexts/${contextId(contextRef)}/inspect`);
+  if (command === "get-status") data = await get("/api/v1/status", undefined, true);
+  else if (command === "get-capabilities") data = await get("/api/v1/capabilities", undefined, true);
+  else if (command === "search-symbols") data = await get("/api/v1/symbols/search", { query: opts.query, asset: opts.asset, limit: opts.limit || 50 }, true);
+  else if (command === "resolve-symbol") data = await get("/api/v1/symbols/resolve", { symbol: positionals[0] || opts.symbol }, true);
+  else if (command === "scan-contexts") data = await get("/api/v1/contexts", { symbol: opts.symbol, timeframe: opts.timeframe, limit: opts.limit || DEFAULT_CONTEXT_LIMIT });
+  else if (command === "search-records") data = await get("/api/v1/records", { from: opts.from, to: opts.to, pattern: opts.pattern, status: opts.status || "all", limit: opts.limit || 20, cursor: opts.cursor });
+  else if (command === "get-record") data = await get(`/api/v1/records/${positionals[0]}`);
+  else if (command === "get-context") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}`);
+  else if (command === "inspect-chart-context") {
+    const contextRef = requireContextId(positionals[0]);
+    data = await get(`/api/v1/contexts/${contextRef}/inspect`);
     const chart = data.chart && typeof data.chart === "object" ? data.chart : {};
-    const endpoint = chart.endpoint || chart.chart_endpoint || `/api/v1/contexts/${contextId(contextRef)}/chart`;
-    const inspectionEndpoint = chart.inspection_endpoint || `/api/v1/contexts/${contextId(contextRef)}/inspect/chart`;
+    const endpoint = chart.endpoint || chart.chart_endpoint || `/api/v1/contexts/${contextRef}/chart`;
+    const inspectionEndpoint = chart.inspection_endpoint || `/api/v1/contexts/${contextRef}/inspect/chart`;
     chart.chart_endpoint = endpoint;
     chart.inspection_endpoint = inspectionEndpoint;
     chart.full_native_chart_url = `${apiBase(opts)}${endpoint}`;
@@ -288,12 +282,12 @@ async function run(parsed) {
     }
     data.chart = chart;
   }
-  else if (["get-context-manifest", "get_context_manifest"].includes(command)) data = await get(`/api/v1/contexts/${contextId(positionals[0])}/manifest`);
-  else if (["confirm-chart-visual-inspection", "confirm_chart_visual_inspection"].includes(command)) {
+  else if (command === "get-context-manifest") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/manifest`);
+  else if (command === "confirm-chart-visual-inspection") {
     if (!positionals[0] || !positionals[1]) {
       throw new Error("confirm-chart-visual-inspection requires context_id and observed visual code.");
     }
-    data = await requestJson(opts, "POST", `/api/v1/contexts/${contextId(positionals[0])}/visual-confirmation`, {
+    data = await requestJson(opts, "POST", `/api/v1/contexts/${requireContextId(positionals[0])}/visual-confirmation`, {
       auth: true,
       body: {
         observed_visual_code: positionals[1],
@@ -302,23 +296,23 @@ async function run(parsed) {
       }
     });
   }
-  else if (["get-chart", "get_chart", "chart"].includes(command)) {
+  else if (command === "get-chart") {
     await downloadChart(opts, positionals[0]);
     return;
   }
-  else if (["check-context-condition", "check_context_condition"].includes(command)) data = await requestJson(opts, "POST", `/api/v1/contexts/${positionals[0]}/conditions`, { auth: true, body: { condition_id: opts.conditionId, parameters: parseJsonObject(opts.parameters) } });
-  else if (["get-timezone", "get_timezone"].includes(command)) data = await get("/api/v1/timezone");
-  else if (["set-timezone", "set_timezone"].includes(command)) data = await requestJson(opts, "PUT", "/api/v1/timezone", { auth: true, body: { timezone: positionals[0] } });
-  else if (["create-watchlist", "create_watchlist", "add-watchlist", "add_watchlist"].includes(command)) data = await requestJson(opts, "POST", "/api/v1/watchlists", { auth: true, body: { symbol: positionals[0] } });
-  else if (["list-watchlist", "list_watchlist"].includes(command)) data = await get("/api/v1/watchlists");
-  else if (["remove-watchlist", "remove_watchlist"].includes(command)) data = await requestJson(opts, "DELETE", `/api/v1/watchlists/${encodeURIComponent(positionals[0])}`, { auth: true });
-  else if (["create-monitor", "create_monitor"].includes(command)) data = await requestJson(opts, "POST", "/api/v1/monitors", { auth: true, body: { name: opts.name, symbol_filters: opts.symbol ? [opts.symbol] : [], pattern_filters: opts.pattern ? [opts.pattern] : [], timeframe_filters: opts.timeframe ? [opts.timeframe] : [] } });
-  else if (["list-monitors", "list_monitors"].includes(command)) data = await get("/api/v1/monitors");
-  else if (["pause-monitor", "pause_monitor", "resume-monitor", "resume_monitor"].includes(command)) data = await requestJson(opts, "POST", `/api/v1/monitors/${positionals[0]}/${command.startsWith("pause") ? "pause" : "resume"}`, { auth: true, body: {} });
-  else if (["delete-monitor", "delete_monitor"].includes(command)) data = await requestJson(opts, "DELETE", `/api/v1/monitors/${positionals[0]}`, { auth: true });
-  else if (["list-feed", "list_feed"].includes(command)) data = await get("/api/v1/feed", { limit: opts.limit || 50, unread_only: Boolean(opts.unreadOnly) });
-  else if (["ack-feed", "ack_feed"].includes(command)) data = await requestJson(opts, "POST", "/api/v1/feed/ack", { auth: true, body: { event_ids: positionals } });
-  else if (["doctor", "get-usage", "get_usage", "get-quota", "get_quota"].includes(command)) data = await get("/api/v1/usage");
+  else if (command === "check-context-condition") data = await requestJson(opts, "POST", `/api/v1/contexts/${requireContextId(positionals[0])}/conditions`, { auth: true, body: { condition_id: opts.conditionId, parameters: parseJsonObject(opts.parameters) } });
+  else if (command === "get-timezone") data = await get("/api/v1/timezone");
+  else if (command === "set-timezone") data = await requestJson(opts, "PUT", "/api/v1/timezone", { auth: true, body: { timezone: positionals[0] } });
+  else if (command === "create-watchlist") data = await requestJson(opts, "POST", "/api/v1/watchlists", { auth: true, body: { symbol: positionals[0] } });
+  else if (command === "list-watchlist") data = await get("/api/v1/watchlists");
+  else if (command === "remove-watchlist") data = await requestJson(opts, "DELETE", `/api/v1/watchlists/${encodeURIComponent(positionals[0])}`, { auth: true });
+  else if (command === "create-monitor") data = await requestJson(opts, "POST", "/api/v1/monitors", { auth: true, body: { name: opts.name, symbol_filters: opts.symbol ? [opts.symbol] : [], pattern_filters: opts.pattern ? [opts.pattern] : [], timeframe_filters: opts.timeframe ? [opts.timeframe] : [] } });
+  else if (command === "list-monitors") data = await get("/api/v1/monitors");
+  else if (command === "pause-monitor" || command === "resume-monitor") data = await requestJson(opts, "POST", `/api/v1/monitors/${positionals[0]}/${command.startsWith("pause") ? "pause" : "resume"}`, { auth: true, body: {} });
+  else if (command === "delete-monitor") data = await requestJson(opts, "DELETE", `/api/v1/monitors/${positionals[0]}`, { auth: true });
+  else if (command === "list-feed") data = await get("/api/v1/feed", { limit: opts.limit || 50, unread_only: Boolean(opts.unreadOnly) });
+  else if (command === "ack-feed") data = await requestJson(opts, "POST", "/api/v1/feed/ack", { auth: true, body: { event_ids: positionals } });
+  else if (command === "get-usage") data = await get("/api/v1/usage");
   else throw new Error(`Unknown command: ${command}`);
 
   printJson(data);
