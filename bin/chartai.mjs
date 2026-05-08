@@ -2,9 +2,9 @@
 
 import { writeFile } from "node:fs/promises";
 
-const DEFAULT_API_BASE = "https://api.test.chartai.live";
-const DEFAULT_WEB_BASE = "https://test.chartai.live";
-const DEFAULT_MCP_URL = "https://mcp-staging.chartai.live/mcp";
+const DEFAULT_API_BASE = "https://api.chartai.live";
+const DEFAULT_WEB_BASE = "https://chartai.live";
+const DEFAULT_MCP_URL = "https://mcp.chartai.live/mcp";
 const DEFAULT_CONTEXT_LIMIT = 5;
 
 const PUBLIC_COMMANDS = new Set([
@@ -17,7 +17,7 @@ const PUBLIC_COMMANDS = new Set([
 ]);
 
 function usage() {
-  return `Chartai CLI (agent beta)
+  return `Chartai CLI
 
 Usage:
   chartai connect --target cli|mcp|skill

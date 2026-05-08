@@ -3,14 +3,11 @@
 Command-line access to Chartai Chart Context for agents and local terminal
 workflows.
 
-This beta package defaults to Chartai staging:
+Default endpoints:
 
-- API: `https://api.test.chartai.live`
-- Web/key page: `https://test.chartai.live/app/keys`
-- MCP: `https://mcp-staging.chartai.live/mcp`
-
-Use the endpoints shown here for the beta runtime. Production URLs will be
-published in Chartai docs when launch opens.
+- API: `https://api.chartai.live`
+- Web/key page: `https://chartai.live/app/keys`
+- MCP: `https://mcp.chartai.live/mcp`
 
 Use **subscription** only for Chartai billing plans and renewals. Durable agent
 workflows are **watchlists**, **monitors**, and **feed**.
