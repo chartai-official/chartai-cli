@@ -13,10 +13,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test"
+    "check": "node --check bin/chartai.mjs"
   },
   "engines": {
     "node": ">=18.17"
   }
 }
-
