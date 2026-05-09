@@ -166,7 +166,16 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
     if (!response.ok) {
       const detail = typeof data.detail === "object" ? data.detail.detail : data.detail;
       const code = data.code || (typeof data.detail === "object" ? data.detail.code : undefined);
-      throw new Error(`HTTP ${response.status} ${code || ""}: ${detail || JSON.stringify(data)}`);
+      const lines = [`HTTP ${response.status} ${code || ""}: ${detail || JSON.stringify(data)}`];
+      if (data.hint) lines.push(`Hint: ${data.hint}`);
+      if (data.guidance && typeof data.guidance === "object") {
+        if (data.guidance.summary) lines.push(`Guidance: ${data.guidance.summary}`);
+        const actions = Array.isArray(data.guidance.next_actions)
+          ? data.guidance.next_actions.map((item) => item && item.action).filter(Boolean)
+          : [];
+        if (actions.length) lines.push(`Next actions: ${actions.join(", ")}`);
+      }
+      throw new Error(lines.join("\n"));
     }
     return data;
   } finally {

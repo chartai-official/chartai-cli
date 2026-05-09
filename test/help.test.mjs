@@ -91,6 +91,47 @@ test("old --api-key option is rejected", () => {
   assert.match(result.stderr, /Unknown option: --api-key/);
 });
 
+test("API errors surface machine-readable guidance", async () => {
+  const server = http.createServer((req, res) => {
+    assert.equal(req.headers.authorization, "Bearer cak_test");
+    res.statusCode = 404;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({
+      code: "symbol_not_supported",
+      detail: "This symbol is not currently supported by Chartai.",
+      hint: "Use search_symbols.",
+      guidance: {
+        summary: "Resolve the ticker through Chartai before scanning.",
+        next_actions: [
+          { action: "search_symbols" },
+          { action: "resolve_symbol" },
+          { action: "scan_contexts" }
+        ]
+      }
+    }));
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const port = server.address().port;
+    const result = await spawnNode(
+      [
+        "bin/chartai.mjs",
+        "resolve-symbol",
+        "HYPE",
+        "--api-base",
+        `http://127.0.0.1:${port}`
+      ],
+      { encoding: "utf8", env: { ...process.env, CHARTAI_AGENT_KEY: "cak_test" } }
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Use search_symbols/);
+    assert.match(result.stderr, /Resolve the ticker/);
+    assert.match(result.stderr, /Next actions: search_symbols, resolve_symbol, scan_contexts/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test("get-context-manifest without key shows onboarding guidance", () => {
   const result = spawnSync("node", ["bin/chartai.mjs", "get-context-manifest", "ctx_123"], {
     encoding: "utf8",

@@ -65,6 +65,10 @@ symbols such as `BINANCE:TRXUSDT`, `AAPL.US`, and `OANDA:EUR_USD`. Symbol
 discovery means Chartai can normalize the symbol; `scan-contexts` returns
 current contexts only when a ready native chart exists for that symbol/timeframe.
 
+API errors can include `guidance`. The CLI prints the hint, guidance summary,
+and next action names; follow those before changing symbols, timeframes, ids, or
+command names.
+
 ## Supported Commands
 
 - `connect`
