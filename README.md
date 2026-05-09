@@ -39,6 +39,8 @@ Never paste the raw key into an agent response.
 chartai get-capabilities
 chartai search-symbols --query BTC --asset crypto
 chartai search-symbols --query TRX --asset crypto
+chartai search-symbols --asset stock --limit 100
+chartai search-symbols --asset forex --limit 100 --cursor OANDA:EUR_USD
 chartai resolve-symbol AAPL
 chartai resolve-symbol FX:EURUSD
 chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
@@ -64,6 +66,11 @@ normalizes crypto, US stock, and forex/metals aliases into provider canonical
 symbols such as `BINANCE:TRXUSDT`, `AAPL.US`, and `OANDA:EUR_USD`. Symbol
 discovery means Chartai can normalize the symbol; `scan-contexts` returns
 current contexts only when a ready native chart exists for that symbol/timeframe.
+`search-symbols` is paginated across crypto, US stocks, and forex/metals. If
+the response has `has_more=true`, call it again with `--cursor <next_cursor>`
+until `has_more=false`. Do not treat the first 100 results as the full catalog.
+`list-feed` is also paginated; keep calling it with `--cursor <next_cursor>`
+until `has_more=false`.
 
 Agent-facing API errors include `guidance`. The CLI prints the hint, guidance
 summary, and next action names; follow those before changing symbols,

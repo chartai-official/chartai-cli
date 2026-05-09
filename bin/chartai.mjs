@@ -23,6 +23,7 @@ Usage:
   chartai connect --target cli|mcp|skill
   chartai get-capabilities
   chartai search-symbols --query BTC --asset crypto
+  chartai search-symbols --asset stock --limit 100 --cursor AAPL.US
   chartai resolve-symbol AAPL
   chartai resolve-symbol FX:EURUSD
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
@@ -30,6 +31,7 @@ Usage:
   chartai get-context-manifest ctx_12345
   chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
   chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
+  chartai list-feed --limit 20 --unread-only --cursor evt_12345
   chartai get-usage
   chartai mcp-config
 
@@ -271,7 +273,7 @@ async function run(parsed) {
 
   if (command === "get-status") data = await get("/api/v1/status", undefined, true);
   else if (command === "get-capabilities") data = await get("/api/v1/capabilities", undefined, true);
-  else if (command === "search-symbols") data = await get("/api/v1/symbols/search", { query: opts.query, asset: opts.asset, limit: opts.limit || 50 }, true);
+  else if (command === "search-symbols") data = await get("/api/v1/symbols/search", { query: opts.query, asset: opts.asset, limit: opts.limit || 50, cursor: opts.cursor }, true);
   else if (command === "resolve-symbol") data = await get("/api/v1/symbols/resolve", { symbol: positionals[0] || opts.symbol }, true);
   else if (command === "scan-contexts") data = await get("/api/v1/contexts", { symbol: opts.symbol, timeframe: opts.timeframe, limit: opts.limit || DEFAULT_CONTEXT_LIMIT });
   else if (command === "search-records") data = await get("/api/v1/records", { from: opts.from, to: opts.to, pattern: opts.pattern, status: opts.status || "all", limit: opts.limit || 20, cursor: opts.cursor });
@@ -321,7 +323,7 @@ async function run(parsed) {
   else if (command === "list-monitors") data = await get("/api/v1/monitors");
   else if (command === "pause-monitor" || command === "resume-monitor") data = await requestJson(opts, "POST", `/api/v1/monitors/${positionals[0]}/${command.startsWith("pause") ? "pause" : "resume"}`, { auth: true, body: {} });
   else if (command === "delete-monitor") data = await requestJson(opts, "DELETE", `/api/v1/monitors/${positionals[0]}`, { auth: true });
-  else if (command === "list-feed") data = await get("/api/v1/feed", { limit: opts.limit || 50, unread_only: Boolean(opts.unreadOnly) });
+  else if (command === "list-feed") data = await get("/api/v1/feed", { limit: opts.limit || 50, unread_only: Boolean(opts.unreadOnly), cursor: opts.cursor });
   else if (command === "ack-feed") data = await requestJson(opts, "POST", "/api/v1/feed/ack", { auth: true, body: { event_ids: positionals } });
   else if (command === "get-usage") data = await get("/api/v1/usage");
   else throw new Error(`Unknown command: ${command}`);
