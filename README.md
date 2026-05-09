@@ -38,6 +38,9 @@ Never paste the raw key into an agent response.
 ```bash
 chartai get-capabilities
 chartai search-symbols --query BTC --asset crypto
+chartai search-symbols --query TRX --asset crypto
+chartai resolve-symbol AAPL
+chartai resolve-symbol FX:EURUSD
 chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
 chartai inspect-chart-context ctx_12345 --output chart.png
 chartai get-context-manifest ctx_12345
@@ -55,6 +58,12 @@ actually see the chart, read the VC code and call
 `confirm-chart-visual-inspection`. If the runtime cannot see images, report
 `visual_unverified` and continue with the structured context only. Use
 `get-chart` only for explicit raw chart downloads.
+
+Run `search-symbols` or `resolve-symbol` before scanning user tickers. Chartai
+normalizes crypto, US stock, and forex/metals aliases into provider canonical
+symbols such as `BINANCE:TRXUSDT`, `AAPL.US`, and `OANDA:EUR_USD`. Symbol
+discovery means Chartai can normalize the symbol; `scan-contexts` returns
+current contexts only when a ready native chart exists for that symbol/timeframe.
 
 ## Supported Commands
 
