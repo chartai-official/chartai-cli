@@ -66,6 +66,8 @@ normalizes crypto, US stock, and forex/metals aliases into provider canonical
 symbols such as `BINANCE:TRXUSDT`, `AAPL.US`, and `OANDA:EUR_USD`. Symbol
 discovery means Chartai can normalize the symbol; `scan-contexts` returns
 current contexts only when a ready native chart exists for that symbol/timeframe.
+No ready context? Chartai can queue a fresh scan; wait, then retry the same
+query.
 `search-symbols` is paginated across crypto, US stocks, and forex/metals. If
 the response has `has_more=true`, call it again with `--cursor <next_cursor>`
 until `has_more=false`. Do not treat the first 100 results as the full catalog.
