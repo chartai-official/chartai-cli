@@ -15,7 +15,9 @@ workflows are **watchlists**, **monitors**, and **feed**.
 Agent flow: use `scan-contexts` to find current Chart Context, then use
 `inspect-chart-context` before making a judgment. Keep the returned `context_id`
 as the decision evidence ID. Use `get-record` and `search-records` with
-`detection_id` only when you need historical lifecycle records.
+`detection_id` only when you need historical lifecycle records. Use
+`get-context-ohlcv` only when you need the candles attached to the selected
+context's chart window.
 
 ## Install From GitHub
 
@@ -46,6 +48,7 @@ chartai resolve-symbol FX:EURUSD
 chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
 chartai inspect-chart-context ctx_12345 --output chart.png
 chartai get-context-manifest ctx_12345
+chartai get-context-ohlcv ctx_12345
 chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
 chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
 chartai check-context-condition ctx_12345 --condition-id price_volume_state
@@ -60,6 +63,10 @@ actually see the chart, read the VC code and call
 `confirm-chart-visual-inspection`. If the runtime cannot see images, report
 `visual_unverified` and continue with the structured context only. Use
 `get-chart` only for explicit raw chart downloads.
+
+`get-context-ohlcv` returns the OHLCV candles for the selected context's chart
+window. It is meant for auditing the chart evidence after a context is chosen,
+not for general price-feed access.
 
 Run `search-symbols` or `resolve-symbol` before scanning user tickers. Chartai
 normalizes crypto, US stock, and forex/metals aliases into provider canonical
@@ -88,6 +95,7 @@ timeframes, ids, or command names.
 - `scan-contexts`
 - `inspect-chart-context`
 - `get-context-manifest`
+- `get-context-ohlcv`
 - `confirm-chart-visual-inspection`
 - `get-context`
 - `get-chart`

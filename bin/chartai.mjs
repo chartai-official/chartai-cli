@@ -29,6 +29,7 @@ Usage:
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
   chartai get-context-manifest ctx_12345
+  chartai get-context-ohlcv ctx_12345
   chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
   chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
   chartai list-feed --limit 20 --unread-only --cursor evt_12345
@@ -296,6 +297,7 @@ async function run(parsed) {
     data.chart = chart;
   }
   else if (command === "get-context-manifest") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/manifest`);
+  else if (command === "get-context-ohlcv") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/ohlcv`);
   else if (command === "confirm-chart-visual-inspection") {
     if (!positionals[0] || !positionals[1]) {
       throw new Error("confirm-chart-visual-inspection requires context_id and observed visual code.");
