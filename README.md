@@ -17,7 +17,10 @@ Agent flow: use `scan-contexts` to find current Chart Context, then use
 as the decision evidence ID. Use `get-record` and `search-records` with
 `detection_id` only when you need historical lifecycle records. Use
 `get-context-ohlcv` only when you need the candles attached to the selected
-context's chart window.
+context's chart window; pass `--window wide` for wider data-only context around
+the same Chart Context. Use `get-chart --variant original` when the agent needs
+a persistent clean image containing only wider-context candles, Volume, and
+pattern geometry.
 
 ## Install From GitHub
 
@@ -47,8 +50,10 @@ chartai resolve-symbol AAPL
 chartai resolve-symbol FX:EURUSD
 chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
 chartai inspect-chart-context ctx_12345 --output chart.png
+chartai get-chart ctx_12345 --variant original --output original.png
 chartai get-context-manifest ctx_12345
 chartai get-context-ohlcv ctx_12345
+chartai get-context-ohlcv ctx_12345 --window wide
 chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
 chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
 chartai check-context-condition ctx_12345 --condition-id price_volume_state
@@ -62,11 +67,16 @@ then returns structured Chart Context JSON for verification. If the agent can
 actually see the chart, read the VC code and call
 `confirm-chart-visual-inspection`. If the runtime cannot see images, report
 `visual_unverified` and continue with the structured context only. Use
-`get-chart` only for explicit raw chart downloads.
+`get-chart` only for explicit raw chart downloads. `get-chart --variant original`
+downloads the stored original chart variant: candles, Volume, and pattern
+geometry only, with indicators, entry, stop, and targets removed. It uses a
+wider context window than the decision chart, then persists the generated image.
 
 `get-context-ohlcv` returns the OHLCV candles for the selected context's chart
 window. It is meant for auditing the chart evidence after a context is chosen,
-not for general price-feed access.
+not for general price-feed access. Add `--window wide` when the agent needs more
+left/right candle context for its own drawing or distant support/resistance
+review; wide mode returns data only and does not request another chart image.
 
 Run `search-symbols` or `resolve-symbol` before scanning user tickers. Chartai
 normalizes crypto, US stock, and forex/metals aliases into provider canonical

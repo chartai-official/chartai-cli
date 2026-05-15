@@ -28,8 +28,10 @@ Usage:
   chartai resolve-symbol FX:EURUSD
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
+  chartai get-chart ctx_12345 --variant original --output original.png
   chartai get-context-manifest ctx_12345
   chartai get-context-ohlcv ctx_12345
+  chartai get-context-ohlcv ctx_12345 --window wide
   chartai confirm-chart-visual-inspection ctx_12345 ABCD --method cli_file
   chartai check-context-condition ctx_12345 --condition-id price_above_vwap --parameters '{"window_days":3}'
   chartai list-feed --limit 20 --unread-only --cursor evt_12345
@@ -42,6 +44,8 @@ Global options:
   --web-base <url>      Default: ${DEFAULT_WEB_BASE}
   --mcp-url <url>       Default: ${DEFAULT_MCP_URL}
   --output <path>       Save raw chart for get-chart or VC inspection chart for inspect-chart-context.
+  --variant <name>      get-chart variant: decision or original. Default: decision.
+  --window <name>       get-context-ohlcv window: context or wide. Default: context.
   --help, -h
 
 Agent key:
@@ -83,6 +87,8 @@ function parseArgv(argv) {
     else if (item === "--pattern") opts.pattern = readValue(item);
     else if (item === "--status") opts.status = readValue(item);
     else if (item === "--output") opts.output = readValue(item);
+    else if (item === "--variant") opts.variant = readValue(item);
+    else if (item === "--window") opts.window = readValue(item);
     else if (item === "--condition-id") opts.conditionId = readValue(item);
     else if (item === "--parameters") opts.parameters = readValue(item);
     else if (item === "--method") opts.method = readValue(item);
@@ -188,7 +194,15 @@ async function requestJson(opts, method, path, { params, body, auth = true } = {
 
 async function downloadChartFile(opts, contextRef, outputPath, chartPath) {
   const key = agentKey(opts, true);
-  const path = chartPath || `/api/v1/contexts/${requireContextId(contextRef)}/chart`;
+  const contextId = requireContextId(contextRef);
+  const variant = (opts.variant || "decision").toLowerCase();
+  if (variant !== "decision" && variant !== "original") {
+    throw new Error("variant must be decision or original.");
+  }
+  const variantPath = variant === "original"
+    ? `/api/v1/contexts/${contextId}/original-chart`
+    : `/api/v1/contexts/${contextId}/chart`;
+  const path = chartPath || variantPath;
   const url = `${apiBase(opts)}${path}`;
   const response = await fetch(url, {
     method: "GET",
@@ -297,7 +311,13 @@ async function run(parsed) {
     data.chart = chart;
   }
   else if (command === "get-context-manifest") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/manifest`);
-  else if (command === "get-context-ohlcv") data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/ohlcv`);
+  else if (command === "get-context-ohlcv") {
+    const window = (opts.window || "context").toLowerCase();
+    if (window !== "context" && window !== "wide") {
+      throw new Error("window must be context or wide.");
+    }
+    data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/ohlcv`, { window });
+  }
   else if (command === "confirm-chart-visual-inspection") {
     if (!positionals[0] || !positionals[1]) {
       throw new Error("confirm-chart-visual-inspection requires context_id and observed visual code.");
