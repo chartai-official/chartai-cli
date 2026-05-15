@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 const DEFAULT_API_BASE = "https://api.chartai.live";
 const DEFAULT_WEB_BASE = "https://chartai.live";
@@ -29,6 +29,7 @@ Usage:
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
   chartai get-chart ctx_12345 --variant original --output original.png
+  chartai render-agent-chart --spec-file agent-chart.json --output agent-chart.png
   chartai get-context-manifest ctx_12345
   chartai get-context-ohlcv ctx_12345
   chartai get-context-ohlcv ctx_12345 --window wide
@@ -46,6 +47,7 @@ Global options:
   --output <path>       Save raw chart for get-chart or VC inspection chart for inspect-chart-context.
   --variant <name>      get-chart variant: decision or original. Default: decision.
   --window <name>       get-context-ohlcv window: context or wide. Default: context.
+  --spec-file <path>    JSON file for render-agent-chart.
   --help, -h
 
 Agent key:
@@ -89,6 +91,7 @@ function parseArgv(argv) {
     else if (item === "--output") opts.output = readValue(item);
     else if (item === "--variant") opts.variant = readValue(item);
     else if (item === "--window") opts.window = readValue(item);
+    else if (item === "--spec-file") opts.specFile = readValue(item);
     else if (item === "--condition-id") opts.conditionId = readValue(item);
     else if (item === "--parameters") opts.parameters = readValue(item);
     else if (item === "--method") opts.method = readValue(item);
@@ -240,6 +243,15 @@ function parseJsonObject(text, fallback = {}) {
   return value;
 }
 
+async function readJsonObjectFile(path) {
+  if (!path) throw new Error("render-agent-chart requires --spec-file.");
+  const value = JSON.parse(await readFile(path, "utf8"));
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("spec file must contain a JSON object.");
+  }
+  return value;
+}
+
 async function run(parsed) {
   const { command, positionals, opts } = parsed;
   if (!command || opts.help) {
@@ -317,6 +329,27 @@ async function run(parsed) {
       throw new Error("window must be context or wide.");
     }
     data = await get(`/api/v1/contexts/${requireContextId(positionals[0])}/ohlcv`, { window });
+  }
+  else if (command === "render-agent-chart") {
+    data = await requestJson(opts, "POST", "/api/v1/agent-charts", {
+      auth: true,
+      body: await readJsonObjectFile(opts.specFile)
+    });
+    const chart = data.chart && typeof data.chart === "object" ? data.chart : {};
+    const endpoint = chart.chart_endpoint || chart.chart_url;
+    if (endpoint) chart.full_native_chart_url = `${apiBase(opts)}${endpoint}`;
+    if (opts.output) {
+      if (!endpoint) throw new Error("API response did not include an agent chart endpoint.");
+      const key = agentKey(opts, true);
+      const response = await fetch(`${apiBase(opts)}${endpoint}`, {
+        method: "GET",
+        headers: { authorization: `Bearer ${key}`, accept: "image/*,application/json" }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      await writeFile(opts.output, new Uint8Array(await response.arrayBuffer()));
+      chart.path = opts.output;
+    }
+    data.chart = chart;
   }
   else if (command === "confirm-chart-visual-inspection") {
     if (!positionals[0] || !positionals[1]) {

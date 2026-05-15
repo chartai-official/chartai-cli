@@ -20,7 +20,14 @@ as the decision evidence ID. Use `get-record` and `search-records` with
 context's chart window; pass `--window wide` for wider data-only context around
 the same Chart Context. Use `get-chart --variant original` when the agent needs
 a persistent clean image containing only wider-context candles, Volume, and
-pattern geometry.
+pattern geometry. Use `render-agent-chart` when the agent has its own live
+thesis and needs Chartai to render a persistent TradingView-based chart from a
+symbol, interval, focus range, optional source context id, and overlays. Include
+the context id to keep the original pattern shape; Chartai may add safety
+margin around the focus range so labels and source pattern shapes are not
+clipped. Send retest support/resistance areas as zones or two-price Retest
+support/resistance overlays; use Dynamic or Trendline labels only for sloped
+lines. Do not upload OHLCV.
 
 ## Install From GitHub
 
@@ -51,6 +58,7 @@ chartai resolve-symbol FX:EURUSD
 chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
 chartai inspect-chart-context ctx_12345 --output chart.png
 chartai get-chart ctx_12345 --variant original --output original.png
+chartai render-agent-chart --spec-file agent-chart.json --output agent-chart.png
 chartai get-context-manifest ctx_12345
 chartai get-context-ohlcv ctx_12345
 chartai get-context-ohlcv ctx_12345 --window wide
@@ -77,6 +85,18 @@ window. It is meant for auditing the chart evidence after a context is chosen,
 not for general price-feed access. Add `--window wide` when the agent needs more
 left/right candle context for its own drawing or distant support/resistance
 review; wide mode returns data only and does not request another chart image.
+
+`render-agent-chart` creates a new permanent agent chart artifact from
+TradingView `symbol`, `interval`, focus `range`, optional source context id,
+structured overlays, and optional studies. It is for agent-owned follow-up
+drawings after the agent has done its own real-time analysis elsewhere. This
+action requires Pro, and each accepted request uses 5 Chart Context units.
+Include the context id to keep the original pattern shape. Chartai may add
+safety margin around the focus range so labels and source pattern shapes are not
+clipped. Send retest support/resistance areas as zones or two-price Retest
+overlays, and use Dynamic/Trendline labels only for sloped lines. It does not
+accept uploaded OHLCV; use the agent's Bybit or exchange data only to decide what
+symbol/range/levels to request.
 
 Run `search-symbols` or `resolve-symbol` before scanning user tickers. Chartai
 normalizes crypto, US stock, and forex/metals aliases into provider canonical
@@ -109,6 +129,7 @@ timeframes, ids, or command names.
 - `confirm-chart-visual-inspection`
 - `get-context`
 - `get-chart`
+- `render-agent-chart`
 - `get-record`
 - `search-records`
 - `check-context-condition`
