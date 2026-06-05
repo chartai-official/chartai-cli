@@ -23,8 +23,7 @@ Usage:
   chartai connect --target cli|mcp|skill
   chartai get-capabilities
   chartai search-symbols --query BTC --asset crypto
-  chartai search-symbols --asset stock --limit 100 --cursor AAPL.US
-  chartai resolve-symbol AAPL
+  chartai search-symbols --asset forex --limit 100 --cursor OANDA:EUR_USD
   chartai resolve-symbol FX:EURUSD
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
