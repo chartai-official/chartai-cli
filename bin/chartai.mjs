@@ -23,8 +23,8 @@ Usage:
   chartai connect --target cli|mcp|skill
   chartai get-capabilities
   chartai search-symbols --query BTC --asset crypto
-  chartai search-symbols --asset forex --limit 100 --cursor OANDA:EUR_USD
-  chartai resolve-symbol FX:EURUSD
+  chartai search-symbols --asset crypto --limit 100 --cursor BINANCE:ETHUSDT
+  chartai resolve-symbol SOL
   chartai scan-contexts --symbol BINANCE:BTCUSDT --timeframe 1h
   chartai inspect-chart-context ctx_12345 --output chart.png
   chartai get-chart ctx_12345 --variant original --output original.png
