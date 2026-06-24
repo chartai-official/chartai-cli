@@ -83,6 +83,8 @@ discovery means Chartai can normalize the symbol; `scan-contexts` returns
 current contexts only when a ready native chart exists for that symbol/timeframe.
 No ready context? Chartai can queue a fresh scan; wait, then retry the same
 query.
+Current scan timeframes are `30m`, `1h`, `4h`, and `1D`; do not request retired
+lower timeframes such as `5m` or `15m`.
 `search-symbols` is paginated across crypto. If
 the response has `has_more=true`, call it again with `--cursor <next_cursor>`
 until `has_more=false`. Do not treat the first 100 results as the full catalog.
